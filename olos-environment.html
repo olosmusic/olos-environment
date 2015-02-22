@@ -9,10 +9,64 @@
 
 <template>
     <link rel="stylesheet" href="olos-environment.css">
-    <div id="container">
+
+
+<!--     <div id="container">
       <p>helo</p>
       <svg id="olossvg">></svg>
+    </div> -->
+
+
+<!-- from th-connector -->
+    <div id="container" on-dragover="{{dragOver}}" on-drop="{{droppedInContainer}}">
+      <svg id="svg"></svg>
+
+
+      <!-- Components and connector dots --> 
+      <template if="{{_positioned}}">
+        <template repeat="{{el, index in _elements}}">
+          <div class="wrapper {{el.name}}" id="wrapper-{{el.element.id}}" on-click="{{wrapperClicked}}" on-dragStart="{{dragStartWrapper}}" 
+          on-th-output-changed="{{showOutputAvailable}}" on-th-input-changed="{{showInputAvailable}}" 
+          style="top: {{el.top}}px; left: {{el.left}}px" draggable="true">
+            <label>{{el.name}}</label>
+            <!--<core-icon-button icon="clear" class="deleteEl {{el.element.id}}" on-click="{{_deleteElement}}"></core-icon-button> -->
+            <div  class="deleteEl" component_id="{{el.element.id}}" on-click="{{_deleteElement}}">X</div>
+             
+            <div class="connectors-in" >
+              <!-- Input -->
+              <template if="{{el.element.publish | checkForInputAttr}}">
+                <div class="{{el.element.id}} arrow" on-dragover="{{dragOver}}" on-dragStart="{{dragStart}}" on-dragleave="{{dragLeave}}" on-drop="{{_makeConnection}}" draggable="true">
+                  <div class="inputMarker"></div>
+                </div>
+                
+              </template>
+
+              <!-- Output -->
+            </div>
+            <content select="#{{el.id}}"></content>
+            <div class="connectors-out" >
+              <template if="{{el.element.publish | checkForOutputAttr}}">
+                <div id="{{index}}"  class="{{el.element.id}} arrow" on-dragStart="{{dragStartOutput}}" on-drag="{{drag}}" on-dragEnd="{{dragEnd}}"  draggable="true" style="border-left-color: {{el.outputReady ? el.color : defaultColor}}; ">
+                  <div class="outputMarker"></div>
+                </div>
+              </template>
+              
+            </div>
+            <div class="final-result-buttons">
+              <template if="{{el.element.publish | checkForNoOutputAttr}}">
+                <div id="{{index}}"  class="{{el.element.id}} checkmark"  draggable="true" on-click="{{setAsFinalResult}}" title="Set as final result">
+                  <core-icon-button icon="check"></core-icon-button>
+                </div>
+              </template>
+            </div>
+            <div class="resize"  draggable="true"  on-drag="{{dragResize}}" on-dragEnd="{{dragResizeEnd}}"></div>
+          </div>
+        </template>
+      </template>
     </div>
+
+<!-- end th-connector-->
+
 </template>
 
 <script type="text/javascript" src="olos-environment.js"></script>
