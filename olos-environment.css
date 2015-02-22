@@ -1,0 +1,36 @@
+/*
+
+ */
+
+:host {
+  display: block;
+  height:100%;
+  width:100%;
+}
+
+:host:hover {
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.connectors-in {
+  position: absolute;
+  left: -15px;
+  top: 0px;
+}
+
+.connectors-out {
+  position: absolute;
+  right: -15px;
+  top: 0px;
+}

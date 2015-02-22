@@ -1,0 +1,10 @@
+{
+  "name": "olos-environment",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^0.5"
+  },
+  "devDependencies": {
+    "web-component-tester": "Polymer/web-component-tester#^1.1.4"
+  },
+  "version": "0.0.0"
+}
