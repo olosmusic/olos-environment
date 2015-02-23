@@ -9,8 +9,8 @@
     },
 
     clickCallback: function(e) {
-      // e.stopPropagation();
-      // e.preventDefault();
+      e.stopPropagation();
+      e.preventDefault();
       // console.log(e.target);
       // console.log(e.currentTarget);
       // console.log(e.target.nodeName);
