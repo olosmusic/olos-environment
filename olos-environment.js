@@ -11,6 +11,7 @@
     clickCallback: function(e) {
       e.stopPropagation();
       e.preventDefault();
+      console.log(e.path);
       // console.log(e.target);
       // console.log(e.currentTarget);
       // console.log(e.target.nodeName);
@@ -101,13 +102,20 @@
 
     // interact.js
     dragStart: function(event) {
+      // console.log(event);
+      // console.log('drag start!');
+      // console.log(event);
       console.log(event);
-      console.log('drag start!');
     },
 
     dragMove: function(event) {
+      var eventOrigin = event.interaction.downEvent.path[0];
+      console.log(eventOrigin.id);
+      if (eventOrigin.id !== 'container') {
+        return;
+      }
       var target = event.target.$.container;
-      console.log(target);
+      // console.log(target);
       // keep the dragged position in the data-x/data-y attributes
       var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
       var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
@@ -124,7 +132,7 @@
     },
 
     dragEnd: function(event) {
-      console.log(event);
+      // console.log(event);
       console.log('onend!');
     },
 
