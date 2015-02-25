@@ -2,6 +2,10 @@
 
  */
 
+/*html,body {
+  font-family: 'RobotoDraft', sans-serif;
+}
+*/
 :host {
   display: relative;
   height:100%;
@@ -12,6 +16,7 @@
   margin: 0;
   padding: 0;
   z-index: -100;
+  font-family: 'RobotoDraft', sans-serif;
 }
 
 :host:hover {

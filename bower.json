@@ -2,7 +2,8 @@
   "name": "olos-environment",
   "dependencies": {
     "polymer": "Polymer/polymer#^0.5",
-    "interact": "~1.2.3"
+    "interact": "~1.2.3",
+    "font-roboto": "Polymer/font-roboto#^0.5.0"
   },
   "devDependencies": {
     "web-component-tester": "Polymer/web-component-tester#^1.1.4"
