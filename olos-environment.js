@@ -94,13 +94,14 @@
       }
 
       event.preventDefault();
-      event.stopPropagation();
+      // event.stopPropagation();
     };
 
     function _stopDraggingPort(event) {
       // stop listeners
       document.removeEventListener("mousemove", _whileDraggingPort,   true);
       document.removeEventListener("mouseup",   _stopDraggingPort, true);
+      document.removeEventListener("mousemove", _whileDraggingPort,   true);
 
       if (_dragObj.lastLit) {
         _dragObj.lastLit.className = _dragObj.lastLit.unlitClassname;
@@ -115,36 +116,21 @@
 
       var eventPath = event.path;
 
-      toElem = flipThruPath(eventPath, 'olos');
-      // for (var i = 0; i< eventPath.length; i++) {
-      //   if (eventPath[i].hasOwnProperty('className')) {
-      //     var classNom = eventPath[i].className;
-      //     if (typeof(classNom) === 'string') {
-      //       if (classNom.indexOf('port') > -1) {
-      //         toPort = eventPath[i];
-      //       } else if (classNom.indexOf('olos') > -1){
-      //         toElem = eventPath[i];
-      //       }
-      //     }
-      //   }
-      // }
+      var dst = flipThruPath(eventPath, 'olos');
+      var src = flipThruPath(_dragObj.path, 'olos');
 
-      if (typeof(toElem) == 'undefined' || typeof (toElem.id) == 'undefined') {
+      // if no connection was made
+      if (typeof(dst) == 'undefined'){ //|| typeof (toElem.id) == 'undefined') {
         _dragObj.connectorShape.parentNode.removeChild(_dragObj.connectorShape);
         _dragObj.connectorShape = null;
-      } else{
-        console.log('connection!');
-
-        // connect
-        // var theSource = _dragObj.path[0];
-        var theDestination = toElem;
-
-        // flip thru the source parents until we find one with class olos
+      }
+      else {
+        // helper: flip thru the source parents until we find one with classname
         function flipThruPath(pathArray, className) {
           for (var i = 0; i < pathArray.length; i++) {
             var theClass = pathArray[i].className;
             if (typeof(theClass) === 'string') {
-              if (pathArray[i].className === 'olos') {
+              if (pathArray[i].className === className) {
                 obj = pathArray[i];
                 return obj;
               }
@@ -152,23 +138,80 @@
           }
         }
 
-        var theSource = flipThruPath(_dragObj.path, 'olos');
-        // theDestination = flipThruPath(toElem);
-
-        console.log('source: ');
-        console.log(theSource);
-        console.log('destination: ');
-        console.log(toElem);
-
+        makeConnection(src, dst);
         // environment._elements[1].input = environment._elements[0].output
-
-        // save connections to component source and destination
-
-
       }
+
+      // remove event listeners
+
       event.preventDefault();
-      event.stopPropagation();
     };
+
+    function makeConnection(src, dst) {
+      console.log('making a connection');
+      var connectorShape = _dragObj.connectorShape;
+
+      // Put an entry into the source's outputs
+      if (!src.outputConnections)
+          src.outputConnections = new Array();
+      var connector = new Object();
+      connector.line = connectorShape;
+      connector.destination = dst;
+      src.outputConnections.push(connector);
+
+      // Put an entry into the destinations's inputs
+      if (!dst.inputConnections)
+        dst.inputConnections = new Array();
+      connector = new Object();
+      connector.line = connectorShape;
+      connector.source = src;
+      connector.destination = dst;
+      dst.inputConnections.push(connector);
+
+      connectorShape.inputConnection = connector;
+      connectorShape.destination = dst;
+      connectorShape.onclick = deleteConnection;
+
+      connectorShape = null;
+
+      // save connections to component source and destination
+      dst.input = src.output;
+      console.log(dst.input);
+      console.log(src.output);
+    }
+
+    function deleteConnection() {
+      var connections = this.destination.inputConnections;
+      breakSingleInputConnection( connections, connections.indexOf( this.inputConnection ) );
+    }
+
+    function breakSingleInputConnection( connections, index ) {
+      var connector = connections[index];
+      var src = connector.source;
+      var dst = connector.destination;
+
+      // TO DO: find a better way to handle this
+      dst.input = null;
+
+      // delete us from their .outputConnections,
+      src.outputConnections.splice( src.outputConnections.indexOf( connector.destination ), 1);
+      if (src.output) {  // they may not have an audioNode, if they're a BSN or an Oscillator
+        // call disconnect() on the src,
+        src.output.disconnect();
+        // if there's anything left in their outputConnections, re.connect() those nodes.
+        // TODO: again, this will break due to src resetting.
+        for (var j=0; j<src.outputConnections.length; j++) {
+          src.output.connect( src.outputConnections[j].destination.input);
+        }
+      }
+
+      // and delete the line 
+      connector.line.parentNode.removeChild( connector.line );
+
+      // finally, remove us from the line.
+      connections.splice( index, 1 );
+    }
+
     -->
 
   Polymer('olos-environment', {
@@ -181,15 +224,16 @@
     // inspired by th-connector -->
 
     // appends element to olos-environment
+    // TO DO: give it a custom page position
     addElement: function(newElName, left, top){
       var self = this;
       var newEl = document.createElement(newElName);
+
       // TO DO: check to make sure element is loaded, otherwise load it
       // newEl.setAttribute('_top', top);
       // newEl.setAttribute('_left', left);
       newEl.innerHTML = 'hello';
       self._processChild(newEl);
-      // console.log(newEl.$.container)
 
       // create ports
       self._createPorts(newEl);
@@ -274,11 +318,9 @@
     dragMove: function(event) {
       // only drag if the event origin ID === #container
       var eventOrigin = event.interaction.downEvent.path[0];
-      // console.log(eventOrigin);
       
       // is it a connector?
       if (eventOrigin.id.indexOf('port') > -1 ) {
-        console.log('dragging a port!');
         return;
       }
 
@@ -303,7 +345,6 @@
 
     dragEnd: function(event) {
       var eventTarget = event.interaction._curEventTarget.id;
-      // console.log(eventTarget);
     }
     // <--
 
