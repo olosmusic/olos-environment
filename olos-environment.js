@@ -338,6 +338,30 @@
       target.style.webkitTransform =
       target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
 
+
+      // from Chris Wilson's Web Audio Playground  -->
+      if (event.target.inputConnections) { // update any lines that point in here.
+        console.log('input connex!');
+        var c;
+        for (c=0; c<event.target.inputConnections.length; c++) {
+          event.target.inputConnections[c].line.setAttributeNS(null, "x1", x);
+          event.target.inputConnections[c].line.setAttributeNS(null, "y1", y);
+        }
+      }
+
+      if (event.target.outputConnections) {  // update any lines that point out of here.
+        var c;
+        var oc = event.target.outputConnections;
+        
+        for (c=0; c<oc.length; c++) {
+          // var oX = Math.round( Number( oc[0].destination.$.container.getAttribute('data-x') ) );
+          // var oY = Math.round( Number( oc[0].destination.$.container.getAttribute('data-y') ) )
+          event.target.outputConnections[c].line.setAttributeNS(null, "x2", x);
+          event.target.outputConnections[c].line.setAttributeNS(null, "y2", y);
+        }
+      }
+      // <--
+
       // update the posiion attributes
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);
