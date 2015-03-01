@@ -21,7 +21,7 @@
         x+=off.offsetLeft;
         y+=off.offsetTop;
         off=off.offsetParent;
-        // console.log('off');
+        console.log('off');
       }
 
       // Save starting positions of cursor and element.
@@ -175,7 +175,8 @@
       connectorShape = null;
 
       // save connections to component source and destination
-      dst.input = src.output;
+      src.output.connect(dst.input);        // dst.input = src.output;
+
       console.log(dst.input);
       console.log(src.output);
     }
@@ -189,9 +190,6 @@
       var connector = connections[index];
       var src = connector.source;
       var dst = connector.destination;
-
-      // TO DO: find a better way to handle this
-      dst.input = null;
 
       // delete us from their .outputConnections,
       src.outputConnections.splice( src.outputConnections.indexOf( connector.destination ), 1);
@@ -319,12 +317,8 @@
       // only drag if the event origin ID === #container
       var eventOrigin = event.interaction.downEvent.path[0];
       
-      // is it a connector?
-      if (eventOrigin.id.indexOf('port') > -1 ) {
-        return;
-      }
-
-      if (eventOrigin.id !== 'container') {
+      // is it a port, or a container?
+      if ( eventOrigin.id.indexOf('port') > -1  || eventOrigin.id !== 'container') {
         return;
       }
 

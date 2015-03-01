@@ -10,6 +10,8 @@
   <script src="../webcomponentsjs/webcomponents.js"></script>
   <link href="../olos-oscillator/olos-oscillator.html" rel="import">
   <link href="../olos-destination/olos-destination.html" rel="import">
+  <link href="../olos-envelope/olos-envelope.html" rel="import">
+
   <link href="../paper-input/paper-input.html" rel="import">
   <link href="olos-environment.html" rel="import">
 
@@ -24,10 +26,22 @@
 var audioContext = new AudioContext();
 
 var environment;
-window.onload = function() {
+
+function DOMContentLoaded() {
   environment = document.querySelector('olos-environment');
-  environment.addElement('olos-oscillator', 1000, 100);
-  environment.addElement('olos-destination', 1000, 100);
+  environmentReady();
 }
+
+document.addEventListener( "DOMContentLoaded", DOMContentLoaded, false );
+
+// TO DO: make this work on firefox
+function environmentReady() {
+  console.log(environment);
+  environment.addElement('olos-oscillator', 1000, 100);
+  environment.addElement('olos-envelope');
+  environment.addElement('olos-destination', 1000, 100);
+  console.log('envi ready!');
+}
+
 </script>
 </html>
