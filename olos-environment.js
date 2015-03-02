@@ -149,8 +149,11 @@
 
     function makeConnection(src, dst) {
       console.log('making a connection');
-      var connectorShape = _dragObj.connectorShape;
+      var connectorShape = {};
 
+      if (_dragObj && _dragObj.connectorShape) {
+        connectorShape = _dragObj.connectorShape;
+      }
       // Put an entry into the source's outputs
       if (!src.outputConnections)
           src.outputConnections = new Array();
@@ -230,11 +233,31 @@
       // TO DO: check to make sure element is loaded, otherwise load it
       // newEl.setAttribute('_top', top);
       // newEl.setAttribute('_left', left);
-      newEl.innerHTML = 'hello';
+      // newEl.innerHTML = 'hello';
       self._processChild(newEl);
 
       // create ports
       self._createPorts(newEl);
+
+      // add connect method
+      self._initConnectMethod(newEl);
+
+      // add UI
+      self._createUI(newEl);
+    },
+
+    // make olos objects connectable
+    _initConnectMethod: function(newEl) {
+      newEl.connect = function(element) {
+        // makeConnection(newEl, element);
+        newEl.output.connect(element.input);
+      }
+
+      newEl.disconnect = function(element) {
+        var connections = self.outputConnections;
+          breakSingleInputConnection( connections, connections.indexOf( element ) );
+      }
+
     },
 
     _createPorts: function(newEl) {
@@ -263,6 +286,38 @@
         port.setAttribute('type', 'out');
         port.setAttribute('pdimensions', [newEl.$.container.offsetWidth, newEl.$.container.offsetHeight]);
       }
+    },
+
+    _createUI: function(newEl) {
+      console.log('create UI');
+      var button = document.createElement('button');
+      newEl.analyser = null;
+
+      // toggle whether to show or hide analyser
+      button.addEventListener('click', function(e) {
+        if (newEl.analyser === null) {
+          var analyser = document.createElement('olos-analyser')
+          analyser.setAttribute('id', 'analyser');
+          newEl.$.container.appendChild(analyser);
+          console.log(newEl);
+
+          newEl.analyser = analyser;
+
+          // what is the way to make a connect?
+          // newEl.output.connect(newEl.analyser.input);
+          newEl.connect(analyser);
+
+        } else {
+          console.log(newEl.analyser);
+          newEl.$.container.removeChild(newEl.analyser);
+          newEl.analyser.dispose();
+          newEl.analyser = null;
+        }
+      })
+
+      newEl.$.container.appendChild(button);
+
+
     },
 
     droppedInContainer: function(e, detail, selection) {
