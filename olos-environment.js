@@ -178,7 +178,11 @@
       connectorShape = null;
 
       // save connections to component source and destination
-      src.output.connect(dst.input);        // dst.input = src.output;
+      if (src.output instanceof AudioNode) {
+        src.output.connect(dst.input);        // dst.input = src.output;
+      } else { // otherwise it is data
+        dst.input = src.output;
+      }
 
       console.log(dst.input);
       console.log(src.output);
@@ -257,7 +261,6 @@
         var connections = self.outputConnections;
           breakSingleInputConnection( connections, connections.indexOf( element ) );
       }
-
     },
 
     _createPorts: function(newEl) {
@@ -291,6 +294,8 @@
     _createUI: function(newEl) {
       console.log('create UI');
       var button = document.createElement('button');
+      var t = document.createTextNode('Oscilloscope');       // Create a text node
+      button.appendChild(t);
       newEl.analyser = null;
 
       // toggle whether to show or hide analyser
@@ -313,10 +318,48 @@
           newEl.analyser.dispose();
           newEl.analyser = null;
         }
-      })
+      });
 
       newEl.$.container.appendChild(button);
 
+
+      // CODE BUTTON toggle show/hide code
+      var codeButton = document.createElement('button');
+      var codeLabel = document.createTextNode('Code');       // Create a text node
+      codeButton.appendChild(codeLabel);
+      newEl.codeEditor = null;
+
+      codeButton.addEventListener('click', function(e) {
+        if (newEl.codeEditor === null) {
+          var codeEditor = document.createElement('olos-code-editor')
+          codeEditor.setAttribute('id', 'code');
+          newEl.$.container.appendChild(codeEditor);
+          console.log(newEl);
+
+          newEl.codeEditor = codeEditor;
+
+          // show code TO DO: make multiple parts editable
+          var displayCode = String(newEl.publicAudio)
+          // remove first and last lines of the function to only show its contents
+          displayCode = displayCode.split('\n');
+          displayCode.shift();
+          displayCode.pop();
+          console.log(displayCode);
+          displayCode = displayCode.join('\n');
+          newEl.codeEditor.setValue(displayCode);
+
+
+        } else {
+          var newCode = newEl.codeEditor.getValue();
+          newEl.publicAudio = Function(newCode);
+          newEl.$.container.removeChild(newEl.codeEditor);
+          // newEl.codeEditor.dispose();
+          newEl.codeEditor = null;
+          newEl.publicAudio();
+        }
+      });
+
+      newEl.$.container.appendChild(codeButton);
 
     },
 
@@ -338,7 +381,25 @@
       var self = this;
       var el = newChild;
       el.className = 'olos';
+
       // interact.js
+      // interact(el).resizable({
+      //   edges: 'right'
+      // }).on('resizemove', function (event) {
+      //   var target = event.target.$.container;
+      //   // console.log(target);
+      //   // add the change in coords to the previous width of the target element
+      //   console.log(event);
+      //     var newWidth  = parseFloat(target.offsetWidth ) + event.dx,
+      //         newHeight = parseFloat(target.offsetHeight) + event.dy;
+      //         // console.log(newWidth);
+      //     // // update the element's style
+      //     target.style.width  = newWidth;// + 'px';
+      //     target.style.height = newHeight;// + 'px';
+      //     console.log(target.style.width);
+      // });
+
+
       interact(el).draggable({
         inertia: true,
         // keep the element within the area of it's parent
@@ -351,6 +412,16 @@
         onmove: self.dragMove,
         onend: self.dragEnd
       });
+      //   // add the change in coords to the previous width of the target element
+      //   var newWidth  = parseFloat(target.style.width ) + event.dx,
+      //       newHeight = parseFloat(target.style.height) + event.dy;
+
+      //   // update the element's style
+      //   target.style.width  = newWidth + 'px';
+      //   target.style.height = newHeight + 'px';
+
+      //   target.textContent = newWidth + '×' + newHeight;
+      // });
       // console.log(el.$.container);
       self._elements.push(el);
       self.$.container.appendChild(el);
