@@ -1,4 +1,29 @@
 (function(params){
+
+    // helpers
+
+    // finds a classname in an array of paths
+    function findClassInPath(pathArray, className) {
+      for (var i = 0; i < pathArray.length; i++) {
+        var theClass = pathArray[i].className;
+        if (typeof(theClass) === 'string') {
+          if (pathArray[i].className === className) {
+            obj = pathArray[i];
+            return obj;
+          }
+        }
+      }
+    }
+
+    function findPortInPath(pathArray, className) {
+      for (var i = 0; i < pathArray.length; i++) {
+        if (pathArray[i].localName && pathArray[i].localName.indexOf('olos-port') > -1) {
+          obj = pathArray[i];
+          return obj;
+        }
+      }
+    }
+
     var _dragObj = {};
 
     // --> SVG Dragging
@@ -34,15 +59,15 @@
       // console.log('origin is input? ' + _dragObj.originIsInput);
 
       // Create a connector visual line
-      var svgns = "http://www.w3.org/2000/svg";
+      var svgns = 'http://www.w3.org/2000/svg';
 
-      var shape = document.createElementNS(svgns, "line");
-      shape.setAttributeNS(null, "x1", x);
-      shape.setAttributeNS(null, "y1", y);
-      shape.setAttributeNS(null, "x2", x);
-      shape.setAttributeNS(null, "y2", y);
-      shape.setAttributeNS(null, "stroke", "black");
-      shape.setAttributeNS(null, "stroke-width", "2");
+      var shape = document.createElementNS(svgns, 'line');
+      shape.setAttributeNS(null, 'x1', x);
+      shape.setAttributeNS(null, 'y1', y);
+      shape.setAttributeNS(null, 'x2', x);
+      shape.setAttributeNS(null, 'y2', y);
+      shape.setAttributeNS(null, 'stroke', 'black');
+      shape.setAttributeNS(null, 'stroke-width', '2');
       _dragObj.connectorShape=shape;
 
       // environment.$.svg.appendChild(shape);
@@ -50,8 +75,8 @@
 
 
       // Capture mousemove and mouseup events on the page.
-      document.addEventListener("mousemove", _whileDraggingPort,   true);
-      document.addEventListener("mouseup",   _stopDraggingPort,   true);
+      document.addEventListener('mousemove', _whileDraggingPort,   true);
+      document.addEventListener('mouseup',   _stopDraggingPort,   true);
       event.preventDefault();
       event.stopPropagation();
 
@@ -64,8 +89,8 @@
       y = event.clientY + window.scrollY;
 
       // move visual lines
-      _dragObj.connectorShape.setAttributeNS(null, "x2", x);
-      _dragObj.connectorShape.setAttributeNS(null, "y2", y);
+      _dragObj.connectorShape.setAttributeNS(null, 'x2', x);
+      _dragObj.connectorShape.setAttributeNS(null, 'y2', y);
 
 
       var toElem = event.path[0];
@@ -99,9 +124,9 @@
 
     function _stopDraggingPort(event) {
       // stop listeners
-      document.removeEventListener("mousemove", _whileDraggingPort,   true);
-      document.removeEventListener("mouseup",   _stopDraggingPort, true);
-      document.removeEventListener("mousemove", _whileDraggingPort,   true);
+      document.removeEventListener('mousemove', _whileDraggingPort,   true);
+      document.removeEventListener('mouseup',   _stopDraggingPort, true);
+      document.removeEventListener('mousemove', _whileDraggingPort,   true);
 
       if (_dragObj.lastLit) {
         _dragObj.lastLit.className = _dragObj.lastLit.unlitClassname;
@@ -116,8 +141,11 @@
 
       var eventPath = event.path;
 
-      var dst = flipThruPath(eventPath, 'olos');
-      var src = flipThruPath(_dragObj.path, 'olos');
+      var src = findClassInPath(_dragObj.path, 'olos');
+      var srcPort = findPortInPath(_dragObj.path);
+      var dst = findClassInPath(eventPath, 'olos');
+      var dstPort = findPortInPath(eventPath);
+
 
       // if no connection was made
       if (typeof(dst) == 'undefined'){ //|| typeof (toElem.id) == 'undefined') {
@@ -126,19 +154,7 @@
       }
       else {
         // helper: flip thru the source parents until we find one with classname
-        function flipThruPath(pathArray, className) {
-          for (var i = 0; i < pathArray.length; i++) {
-            var theClass = pathArray[i].className;
-            if (typeof(theClass) === 'string') {
-              if (pathArray[i].className === className) {
-                obj = pathArray[i];
-                return obj;
-              }
-            }
-          }
-        }
-
-        makeConnection(src, dst);
+        makeConnection(src, srcPort, dst, dstPort);
         // environment._elements[1].input = environment._elements[0].output
       }
 
@@ -147,7 +163,7 @@
       event.preventDefault();
     };
 
-    function makeConnection(src, dst) {
+    function makeConnection(src, srcPort, dst, dstPort) {
       console.log('making a connection');
       var connectorShape = {};
 
@@ -179,9 +195,16 @@
 
       // save connections to component source and destination
       if (src.output instanceof AudioNode) {
-        src.output.connect(dst.input);        // dst.input = src.output;
+        console.log(dstPort);
+        console.log(srcPort);
+
+        console.log(src[srcPort.label]);
+        console.log(dst[dstPort.label]);
+        // src.output.connect(dst.input);        // dst.input = src.output;
+        src[srcPort.label].connect(dst[dstPort.label]);
       } else { // otherwise it is data
-        dst.input = src.output;
+        // dst.input = src.output;
+        dst[dstPort.label] = src[srcPort.label];
       }
 
       console.log(dst.input);
@@ -264,35 +287,36 @@
     },
 
     _createPorts: function(newEl) {
-      // add input ports
-      // console.log(newEl.inputCount);
+      var keys = Object.keys(newEl)
+      var inputKeys = keys.filter(function(key){return key.indexOf('input') === 0; });
+      var outputKeys = keys.filter(function(key){return key.indexOf('output') === 0; });
 
-      for (var i = 0; i< newEl.inputCount; i++) {
+      // add input ports
+      for (var i = 0; i < inputKeys.length; i++) {
         var port = document.createElement('olos-port');
 
         // newEl.$.container.appendChild(port);
         newEl.$.container.insertBefore(port, newEl.$.container.firstChild);
-
         port.setAttribute('parent', newEl);
+        port.setAttribute('label', inputKeys[i]);
         port.setAttribute('type', 'in');
         port.setAttribute('class', 'port');
         port.setAttribute('pdimensions', [newEl.$.container.offsetWidth, newEl.$.container.offsetHeight]);
       }
       // add output ports
-      for (var j = 0; j< newEl.outputCount; j++) {
+      for (var j = 0; j < outputKeys.length; j++) {
         var port = document.createElement('olos-port');
-
         // newEl.$.container.appendChild(port);
         newEl.$.container.insertBefore(port, newEl.$.container.firstChild);
 
         port.setAttribute('parent', newEl);
+        port.setAttribute('label', outputKeys[j]);
         port.setAttribute('type', 'out');
         port.setAttribute('pdimensions', [newEl.$.container.offsetWidth, newEl.$.container.offsetHeight]);
       }
     },
 
     _createUI: function(newEl) {
-      console.log('create UI');
       var button = document.createElement('button');
       var t = document.createTextNode('Oscilloscope');       // Create a text node
       button.appendChild(t);
@@ -304,7 +328,6 @@
           var analyser = document.createElement('olos-analyser')
           analyser.setAttribute('id', 'analyser');
           newEl.$.container.appendChild(analyser);
-          console.log(newEl);
 
           newEl.analyser = analyser;
 
@@ -313,7 +336,6 @@
           newEl.connect(analyser);
 
         } else {
-          console.log(newEl.analyser);
           newEl.$.container.removeChild(newEl.analyser);
           newEl.analyser.dispose();
           newEl.analyser = null;
@@ -334,7 +356,6 @@
           var codeEditor = document.createElement('olos-code-editor')
           codeEditor.setAttribute('id', 'code');
           newEl.$.container.appendChild(codeEditor);
-          console.log(newEl);
 
           newEl.codeEditor = codeEditor;
 
@@ -344,7 +365,6 @@
           displayCode = displayCode.split('\n');
           displayCode.shift();
           displayCode.pop();
-          console.log(displayCode);
           displayCode = displayCode.join('\n');
           newEl.codeEditor.setValue(displayCode);
 
@@ -365,14 +385,11 @@
 
     droppedInContainer: function(e, detail, selection) {
       var self = this;
-      console.log(e);
-      console.log('dropped in container');
       e.preventDefault();
       e.stopPropagation();
     },
 
     dragOver: function(e, detail, selection){
-      console.log('dragover');
       e.preventDefault();
       e.stopPropagation();
     },
@@ -404,7 +421,7 @@
         inertia: true,
         // keep the element within the area of it's parent
         restrict: {
-          // restriction: "parent",
+          // restriction: 'parent',
           endOnly: true,
           elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
         },
@@ -437,6 +454,12 @@
         _startDraggingPort(event);
         return;
       }
+      // var target = event.target.$.container;
+      // console.log(target);
+      
+      // // this is not working
+      // target.className += 'dragging';
+      // target.style.setProperty('boxShadow', '10px 10px 5px #888888;');
     },
 
     dragMove: function(event) {
@@ -461,11 +484,10 @@
 
       // from Chris Wilson's Web Audio Playground  -->
       if (event.target.inputConnections) { // update any lines that point in here.
-        console.log('input connex!');
         var c;
         for (c=0; c<event.target.inputConnections.length; c++) {
-          event.target.inputConnections[c].line.setAttributeNS(null, "x1", x);
-          event.target.inputConnections[c].line.setAttributeNS(null, "y1", y);
+          event.target.inputConnections[c].line.setAttributeNS(null, 'x1', x);
+          event.target.inputConnections[c].line.setAttributeNS(null, 'y1', y);
         }
       }
 
@@ -476,8 +498,8 @@
         for (c=0; c<oc.length; c++) {
           // var oX = Math.round( Number( oc[0].destination.$.container.getAttribute('data-x') ) );
           // var oY = Math.round( Number( oc[0].destination.$.container.getAttribute('data-y') ) )
-          event.target.outputConnections[c].line.setAttributeNS(null, "x2", x);
-          event.target.outputConnections[c].line.setAttributeNS(null, "y2", y);
+          event.target.outputConnections[c].line.setAttributeNS(null, 'x2', x);
+          event.target.outputConnections[c].line.setAttributeNS(null, 'y2', y);
         }
       }
       // <--
@@ -488,7 +510,11 @@
     },
 
     dragEnd: function(event) {
-      var eventTarget = event.interaction._curEventTarget.id;
+      var eventTarget = event.interaction._curEventTarget;
+      // eventTarget.className = eventTarget.className.replace( /(?:^|\s)dragging(?!\S)/g , '' );
+      // console.log(eventTarget);
+      // eventTarget.style.setProperty('boxShadow', '1px 1px 1px #888888;', 'important');
+      // eventTarget.style.boxShadow = '1px 1px 1px #888888;';
     }
     // <--
 
