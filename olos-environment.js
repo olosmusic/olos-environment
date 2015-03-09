@@ -179,6 +179,7 @@
       connector.destination = dst;
       connector.sourcePort = src[srcPort.label];
       connector.destinationPort = dst[dstPort.label];
+      connector.destinationLabel = dstPort.label;
       src.outputConnections.push(connector);
 
       // Put an entry into the destinations's inputs
@@ -190,6 +191,7 @@
       connector.destination = dst;
       connector.sourcePort = src[srcPort.label];
       connector.destinationPort = dst[dstPort.label];
+      connector.destinationLabel = dstPort.label;
       dst.inputConnections.push(connector);
 
       connectorShape.inputConnection = connector;
@@ -199,16 +201,19 @@
       connectorShape = null;
 
       // save connections to component source and destination
-      if (src.output instanceof AudioNode) {
+      if (src[srcPort.label] instanceof AudioNode) {
         src[srcPort.label].connect(dst[dstPort.label]);
       } else { // otherwise it is data
-        dst[dstPort.label] = src[srcPort.label];
+
+        // src.subscribers.push(dst[dstPort.label]);
+        // src.
+        // add an event listener
+        // dst[dstPort.label] = src[srcPort.label];
       }
     }
 
     // called by connectorShape object, this = the instance of that object when it deletes itself.
     function deleteConnection() {
-      console.log(this.destination.inputConnections);
       var connections = this.destination.inputConnections;
       breakSingleInputConnection( connections, connections.indexOf( this.inputConnection ) );
     }
@@ -276,15 +281,15 @@
 
     // make olos objects connectable
     _initConnectMethod: function(newEl) {
-      newEl.connect = function(element) {
-        // makeConnection(newEl, element);
-        newEl.output.connect(element.input);
-      }
+      // newEl.connect = function(element) {
+      //   // makeConnection(newEl, element);
+      //   newEl.output.connect(element.input);
+      // }
 
-      newEl.disconnect = function(element) {
-        var connections = self.outputConnections;
-          breakSingleInputConnection( connections, connections.indexOf( element ) );
-      }
+      // newEl.disconnect = function(element) {
+      //   var connections = self.outputConnections;
+      //     breakSingleInputConnection( connections, connections.indexOf( element ) );
+      // }
     },
 
     _createPorts: function(newEl) {
@@ -318,33 +323,34 @@
     },
 
     _createUI: function(newEl) {
-      var button = document.createElement('button');
-      var t = document.createTextNode('Oscilloscope');       // Create a text node
-      button.appendChild(t);
-      newEl.analyser = null;
 
-      // toggle whether to show or hide analyser
-      button.addEventListener('click', function(e) {
-        if (newEl.analyser === null) {
-          var analyser = document.createElement('olos-analyser')
-          analyser.setAttribute('id', 'analyser');
-          newEl.$.container.appendChild(analyser);
+      // createAnalyser
+      // TO DO: don't rely on newEl.output, it may have multiple?
+      if (typeof(newEl.output) !== 'undefined' && newEl.output instanceof AudioNode) {
+        var button = document.createElement('button');
+        var t = document.createTextNode('Oscilloscope');       // Create a text node
+        button.appendChild(t);
+        newEl.analyser = null;
 
-          newEl.analyser = analyser;
+        // toggle whether to show or hide analyser
+        button.addEventListener('click', function(e) {
+          if (newEl.analyser === null) {
+            var analyser = document.createElement('olos-analyser')
+            analyser.setAttribute('id', 'analyser');
+            newEl.$.container.appendChild(analyser);
 
-          // what is the way to make a connect?
-          // newEl.output.connect(newEl.analyser.input);
-          newEl.connect(analyser);
+            newEl.analyser = analyser;
 
-        } else {
-          newEl.$.container.removeChild(newEl.analyser);
-          newEl.analyser.dispose();
-          newEl.analyser = null;
-        }
-      });
+            newEl.output.connect(analyser.input);
 
-      newEl.$.container.appendChild(button);
-
+          } else {
+            newEl.$.container.removeChild(newEl.analyser);
+            newEl.analyser.dispose();
+            newEl.analyser = null;
+          }
+        });
+        newEl.$.container.appendChild(button);
+      }
 
       // CODE BUTTON toggle show/hide code
       var codeButton = document.createElement('button');
