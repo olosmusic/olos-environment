@@ -175,7 +175,10 @@
           src.outputConnections = new Array();
       var connector = new Object();
       connector.line = connectorShape;
+      connector.source = src;
       connector.destination = dst;
+      connector.sourcePort = src[srcPort.label];
+      connector.destinationPort = dst[dstPort.label];
       src.outputConnections.push(connector);
 
       // Put an entry into the destinations's inputs
@@ -185,6 +188,8 @@
       connector.line = connectorShape;
       connector.source = src;
       connector.destination = dst;
+      connector.sourcePort = src[srcPort.label];
+      connector.destinationPort = dst[dstPort.label];
       dst.inputConnections.push(connector);
 
       connectorShape.inputConnection = connector;
@@ -195,23 +200,15 @@
 
       // save connections to component source and destination
       if (src.output instanceof AudioNode) {
-        console.log(dstPort);
-        console.log(srcPort);
-
-        console.log(src[srcPort.label]);
-        console.log(dst[dstPort.label]);
-        // src.output.connect(dst.input);        // dst.input = src.output;
         src[srcPort.label].connect(dst[dstPort.label]);
       } else { // otherwise it is data
-        // dst.input = src.output;
         dst[dstPort.label] = src[srcPort.label];
       }
-
-      console.log(dst.input);
-      console.log(src.output);
     }
 
+    // called by connectorShape object, this = the instance of that object when it deletes itself.
     function deleteConnection() {
+      console.log(this.destination.inputConnections);
       var connections = this.destination.inputConnections;
       breakSingleInputConnection( connections, connections.indexOf( this.inputConnection ) );
     }
@@ -221,15 +218,19 @@
       var src = connector.source;
       var dst = connector.destination;
 
+      console.log(connector);
+      console.log(src.outputConnections);
       // delete us from their .outputConnections,
+      console.log('deleting ' + src.outputConnections.indexOf( connector.destination ));
       src.outputConnections.splice( src.outputConnections.indexOf( connector.destination ), 1);
-      if (src.output) {  // they may not have an audioNode, if they're a BSN or an Oscillator
+      if (connector.sourcePort) {  // they may not have an audioNode, if they're a BSN or an Oscillator
         // call disconnect() on the src,
-        src.output.disconnect();
+        connector.sourcePort.disconnect();
         // if there's anything left in their outputConnections, re.connect() those nodes.
         // TODO: again, this will break due to src resetting.
         for (var j=0; j<src.outputConnections.length; j++) {
-          src.output.connect( src.outputConnections[j].destination.input);
+          console.log(src.outputConnections);
+          connector.sourcePort.connect( src.outputConnections[j].destinationPort);
         }
       }
 
