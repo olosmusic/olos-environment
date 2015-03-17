@@ -448,6 +448,16 @@
       // });
       // console.log(el.$.container);
       self._elements.push(el);
+
+      // position element on the page
+      var x = 100;
+      var y = 200;
+      el.$.container.setAttribute('data-x', x);
+      el.$.container.setAttribute('data-y', y);
+      el.$.container.style.webkitTransform =
+      el.$.container.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+
       self.$.container.appendChild(el);
     },
     // <--
@@ -492,9 +502,19 @@
       // from Chris Wilson's Web Audio Playground  -->
       if (event.target.inputConnections) { // update any lines that point in here.
         var c;
-        for (c=0; c<event.target.inputConnections.length; c++) {
-          event.target.inputConnections[c].line.setAttributeNS(null, 'x1', x);
-          event.target.inputConnections[c].line.setAttributeNS(null, 'y1', y);
+        var ic = event.target.inputConnections;
+        for (c=0; c<ic.length; c++) {
+          // update src
+          ic[c].line.setAttributeNS(null, 'x2', x);
+          ic[c].line.setAttributeNS(null, 'y2', y);
+
+          // update dst
+          var dX = Math.round( Number( ic[c].source.$.container.getAttribute('data-x') ) );
+          var dY = Math.round( Number( ic[c].source.$.container.getAttribute('data-y') ) )
+
+          ic[c].line.setAttributeNS(null, 'x1', dX);
+          ic[c].line.setAttributeNS(null, 'y1', dY);
+
         }
       }
 
@@ -503,10 +523,17 @@
         var oc = event.target.outputConnections;
         
         for (c=0; c<oc.length; c++) {
-          // var oX = Math.round( Number( oc[0].destination.$.container.getAttribute('data-x') ) );
-          // var oY = Math.round( Number( oc[0].destination.$.container.getAttribute('data-y') ) )
-          event.target.outputConnections[c].line.setAttributeNS(null, 'x2', x);
-          event.target.outputConnections[c].line.setAttributeNS(null, 'y2', y);
+          // update source
+          var iX = Math.round( Number( oc[c].source.$.container.getAttribute('data-x') ) );
+          var iY = Math.round( Number( oc[c].source.$.container.getAttribute('data-y') ) )
+          oc[c].line.setAttributeNS(null, 'x1', iX);
+          oc[c].line.setAttributeNS(null, 'y1', iY);
+
+          // update destination
+          var oX = Math.round( Number( oc[c].destination.$.container.getAttribute('data-x') ) );
+          var oY = Math.round( Number( oc[c].destination.$.container.getAttribute('data-y') ) )
+          oc[c].line.setAttributeNS(null, 'x2', oX);
+          oc[c].line.setAttributeNS(null, 'y2', oY);
         }
       }
       // <--
